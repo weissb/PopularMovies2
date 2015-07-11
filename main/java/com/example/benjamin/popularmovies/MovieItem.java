@@ -1,9 +1,13 @@
 package com.example.benjamin.popularmovies;
 
+import java.io.Serializable;
+
 /**
  * Created by benjamin on 7/11/2015.
+ * class for movie item
+ * Serializable so i can put it true intent
  */
-public class MovieItem {
+public class MovieItem implements  Serializable {
     private String sBackdrop;
     private String sID;
     private String sOriginalTitle;

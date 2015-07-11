@@ -2,13 +2,18 @@ package com.example.benjamin.popularmovies;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -29,78 +34,133 @@ import java.util.ArrayList;
 
 
 /**
- * A placeholder fragment containing a simple view.
+ * @author benjamin
+ * @date 12.07.2015
+ * @udacity nanodegree phase 1
+ *
  */
-public class MainActivityFragment extends Fragment {
 
-    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
-    public ArrayAdapter<String> adArrayAdapter;
+
+//sorry for typos ect.. was rly bsy over the last 5 week from work and havent had the time to code, so i had to do all today and now its rly late and i am kinda tired!
+//i hope all is okay for basic passing, i will try to get much more time for my phase 2 and make it nicer looking and try to clean the code!
+//greetings benjamin
+
+public class MovieFragment extends Fragment {
+    //vars
+    private final String LOG_TAG = MovieFragment.class.getSimpleName();
     ArrayList<MovieItem> movieArrayList;
     View rootView;
 
 
 
-    public MainActivityFragment() {
+    public MovieFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        //start fetching of movies. goes in background.
+        //ui picture will be build over method setMovieImage which is executet on onPostExecute from fetchData AsyncTask
+        //so datas can be loadet at start and whanever i want ober the fetch class and gui will always be responsible
+
         FetchMovieTask fetchMovie = new FetchMovieTask();
         fetchMovie.execute("popularity.desc");
 
-        rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-
+        rootView = inflater.inflate(R.layout.fragment_movie, container, false);
 
         return rootView;
 
-
+    }
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        inflater.inflate(R.menu.moviefragment,menu);
 
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_popular) {
+            FetchMovieTask fetchMovie = new FetchMovieTask();
+            fetchMovie.execute("popularity.desc");
+            return true;
+        }
+
+        if (id == R.id.action_rating) {
+            FetchMovieTask fetchMovie = new FetchMovieTask();
+            //highest ratet...result suxx but that is what i have to search!
+            fetchMovie.execute("vote_average.desc");
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+
+    //method for write images in the gridview
+    //automatic executes after fetchdata (onPostExecute)
     public void setMovieImages()
     {
         Context context = getActivity().getApplicationContext();
-        //ImageView imageView = (ImageView) rootView.findViewById(R.id.imageViewMovie);
-        //Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+        //base url pictures
         final String IMAGE_URL = "http://image.tmdb.org/t/p/w185/";
         String[]posterUrls = new String[movieArrayList.size()];
         for(int i = 0 ; i< posterUrls.length ;i++)
         {
-            posterUrls[i]= IMAGE_URL+movieArrayList.get(i).getsPosterPath();
+            //replace picture if there is no poster available
+            if(movieArrayList.get(i).getsPosterPath()=="null") {
+                posterUrls[i] = "http://i.i.cbsi.com/cnwk.1d/i/tim//2010/01/31/fmimg2276274178127844128.jpg";
+            }
+            else
+            {
+                posterUrls[i] = IMAGE_URL + movieArrayList.get(i).getsPosterPath();
+            }
             Log.v(LOG_TAG, "Movie entry: " +  posterUrls[i]);
         }
 
-
-
-
-        String[] eatFoodyImages = {
-                "http://i.imgur.com/rFLNqWI.jpg",
-                "http://i.imgur.com/C9pBVt7.jpg",
-                "http://i.imgur.com/rT5vXE1.jpg",
-                "http://i.imgur.com/aIy5R2k.jpg",
-                "http://i.imgur.com/MoJs9pT.jpg",
-                "http://i.imgur.com/S963yEM.jpg",
-                "http://i.imgur.com/rLR2cyc.jpg",
-                "http://i.imgur.com/SEPdUIx.jpg",
-                "http://i.imgur.com/aC9OjaM.jpg",
-                "http://i.imgur.com/76Jfv9b.jpg",
-                "http://i.imgur.com/fUX7EIB.jpg",
-                "http://i.imgur.com/syELajx.jpg",
-                "http://i.imgur.com/COzBnru.jpg",
-                "http://i.imgur.com/Z3QjilA.jpg",
-        };
-
-
-
         GridView gView = (GridView) rootView.findViewById(R.id.gridViewMovie);
+
+        gView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Context context = getActivity().getApplicationContext();
+
+               // Log.v(LOG_TAG, "DEBUGGG***** view.getId(): " + view.getId());
+               // Log.v(LOG_TAG, "DEBUGGG***** position: " + position);
+               // Log.v(LOG_TAG, "DEBUGGG***** id: " + id);
+
+                //create explizit intent for details
+                //send position whit it so we can do the details
+                //also send the movieitem from the current movie which has to be serialazable for that.
+
+
+                Intent detailIntent = new Intent(getActivity(), DetailMovieActivity.class)
+                        .putExtra("position", position)
+                        .putExtra("movieItem",movieArrayList.get(position));
+
+                startActivity(detailIntent);
+
+            }
+        });
+
         gView.setAdapter(new ImageListAdapter(context, posterUrls));
 
-
-
-
     }
+
+    //method for parse the fetchet data directly into the movieitem class and write it into an array
     private ArrayList<MovieItem> getMovieDataFromJson(String movieJsonStr)
             throws JSONException {
 
@@ -114,7 +174,10 @@ public class MainActivityFragment extends Fragment {
         final String OWM_POSTER_PATH = "poster_path";
         final String OWM_VOTE_AVERAGE = "vote_average";
 
+        //target array initialisation
         movieArrayList = new  ArrayList<MovieItem>();
+
+        //get the json - star tag is results. no more inner circles so we can get all from that
         JSONObject movieJson = new JSONObject(movieJsonStr);
         JSONArray movieJasonArray = movieJson.getJSONArray(OWM_RESULTS);
 
@@ -210,9 +273,7 @@ public class MainActivityFragment extends Fragment {
 
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
+
                     buffer.append(line + "\n");
                 }
 
@@ -262,6 +323,8 @@ public class MainActivityFragment extends Fragment {
 
 
     }
+
+    //adapter fuer die image view
     public class ImageListAdapter extends ArrayAdapter {
         private Context context;
         private LayoutInflater inflater;
