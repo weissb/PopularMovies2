@@ -1,13 +1,19 @@
 package com.example.benjamin.popularmovies;
 
+import android.app.Fragment;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,8 +32,11 @@ import java.util.ArrayList;
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-    ArrayList<MovieItem> movieArrayList;
+
     private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    public ArrayAdapter<String> adArrayAdapter;
+    ArrayList<MovieItem> movieArrayList;
+    View rootView;
 
 
 
@@ -39,7 +48,55 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         FetchMovieTask fetchMovie = new FetchMovieTask();
         fetchMovie.execute("popularity.desc");
-        return inflater.inflate(R.layout.fragment_main, container, false);
+
+        rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+
+
+        return rootView;
+
+
+
+    }
+
+    public void setMovieImages()
+    {
+        Context context = getActivity().getApplicationContext();
+        //ImageView imageView = (ImageView) rootView.findViewById(R.id.imageViewMovie);
+        //Picasso.with(context).load("http://i.imgur.com/DvpvklR.png").into(imageView);
+        final String IMAGE_URL = "http://image.tmdb.org/t/p/w185/";
+        String[]posterUrls = new String[movieArrayList.size()];
+        for(int i = 0 ; i< posterUrls.length ;i++)
+        {
+            posterUrls[i]= IMAGE_URL+movieArrayList.get(i).getsPosterPath();
+            Log.v(LOG_TAG, "Movie entry: " +  posterUrls[i]);
+        }
+
+
+
+
+        String[] eatFoodyImages = {
+                "http://i.imgur.com/rFLNqWI.jpg",
+                "http://i.imgur.com/C9pBVt7.jpg",
+                "http://i.imgur.com/rT5vXE1.jpg",
+                "http://i.imgur.com/aIy5R2k.jpg",
+                "http://i.imgur.com/MoJs9pT.jpg",
+                "http://i.imgur.com/S963yEM.jpg",
+                "http://i.imgur.com/rLR2cyc.jpg",
+                "http://i.imgur.com/SEPdUIx.jpg",
+                "http://i.imgur.com/aC9OjaM.jpg",
+                "http://i.imgur.com/76Jfv9b.jpg",
+                "http://i.imgur.com/fUX7EIB.jpg",
+                "http://i.imgur.com/syELajx.jpg",
+                "http://i.imgur.com/COzBnru.jpg",
+                "http://i.imgur.com/Z3QjilA.jpg",
+        };
+
+
+
+        GridView gView = (GridView) rootView.findViewById(R.id.gridViewMovie);
+        gView.setAdapter(new ImageListAdapter(context, posterUrls));
+
 
 
 
@@ -57,7 +114,7 @@ public class MainActivityFragment extends Fragment {
         final String OWM_POSTER_PATH = "poster_path";
         final String OWM_VOTE_AVERAGE = "vote_average";
 
-
+        movieArrayList = new  ArrayList<MovieItem>();
         JSONObject movieJson = new JSONObject(movieJsonStr);
         JSONArray movieJasonArray = movieJson.getJSONArray(OWM_RESULTS);
 
@@ -75,10 +132,10 @@ public class MainActivityFragment extends Fragment {
                             movieResult.getString(OWM_VOTE_AVERAGE)));
 
         }
-
-        for (MovieItem s : movieArrayList) {
-            Log.v(LOG_TAG, "Movie entry: " + s.toString());
-        }
+        //debug
+        //  for (MovieItem s : movieArrayList) {
+        //    Log.v(LOG_TAG, "Movie entry: " + s.getsOriginalTitle());
+        //}
         return movieArrayList;
 
     }
@@ -92,6 +149,18 @@ public class MainActivityFragment extends Fragment {
     public class FetchMovieTask extends AsyncTask<String, Integer, String[]>{
 
         private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
+
+        @Override
+        protected void onPostExecute(String[] strings) {
+            super.onPostExecute(strings);
+           // List<String> movie = new ArrayList<String>();
+           // for (MovieItem s : movieArrayList) {
+           //     movie.add(s.getsOriginalTitle());
+            //}
+
+            setMovieImages();
+        }
+
         @Override
         //@param String "kindofmovie.sorting"
         protected String[] doInBackground(String... params) {
@@ -154,7 +223,9 @@ public class MainActivityFragment extends Fragment {
                 }
                 movieJsonStr = buffer.toString();
                 try {
-                    ArrayList<MovieItem> movieArrayLiswt = getMovieDataFromJson(movieJsonStr);
+                    movieArrayList = getMovieDataFromJson(movieJsonStr);
+
+
                 } catch (JSONException e) {
                     e.printStackTrace();
                     e.printStackTrace();
@@ -163,8 +234,8 @@ public class MainActivityFragment extends Fragment {
 
 
 
-                Log.v(LOG_TAG,"Movie Json Test: "+ movieJsonStr);
-                Log.v(LOG_TAG,"Movie Url Test: "+ url);
+                //Log.v(LOG_TAG,"Movie Json Test: "+ movieJsonStr);
+                //Log.v(LOG_TAG,"Movie Url Test: "+ url);
             } catch (IOException e) {
                 Log.e(LOG_TAG, "Error ", e);
 
@@ -190,6 +261,36 @@ public class MainActivityFragment extends Fragment {
 
 
 
+    }
+    public class ImageListAdapter extends ArrayAdapter {
+        private Context context;
+        private LayoutInflater inflater;
+
+        private String[] imageUrls;
+
+        public ImageListAdapter(Context context, String[] imageUrls) {
+            super(context, R.layout.movie_grid, imageUrls);
+
+            this.context = context;
+            this.imageUrls = imageUrls;
+
+            inflater = LayoutInflater.from(context);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (null == convertView) {
+                convertView = inflater.inflate(R.layout.movie_grid, parent, false);
+            }
+
+            Picasso
+                    .with(context)
+                    .load(imageUrls[position])
+                    .fit() // will explain later
+                    .into((ImageView) convertView);
+
+            return convertView;
+        }
     }
 
 
